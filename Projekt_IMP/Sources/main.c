@@ -2,7 +2,11 @@
 * Author: Jozef Vanicky
 * VUT Login: xvanic09
 * Date: 2019-12-21
-* Author's comment: N/A
+* Original file: FITkit3-demo
+* Changes according to original: Following lines were used from the original file -> 14, 15, 34-51
+* Changes according to original percentual: 90%
+* Date of last change: 2019-12-22
+* Other Sources: FIT VUT IMP-Lab3, FIT VUT IMP Slides, NXP Docs: K60P144M100SF2V2 Rev. 3, 6/2013; Document Number: K60P144M100SF2V2RM Rev. 2 Jun 2012
 **/
 /* Header file with all the essential definitions for a given type of MCU */
 #include "MK60D10.h"
@@ -29,14 +33,12 @@
 #define C2468Red    0x100
 
 /* A delay function */
-//DO NOT TOUCH
 void delay(long long bound) {
   long long i;
   for(i=0;i<bound;i++);
 }
 
 /* Initialize the MCU - basic clock settings, turning the watchdog off */
-//DO NOT TOUCH
 void MCUInit(void)  {
     MCG_C4 |= ( MCG_C4_DMX32_MASK | MCG_C4_DRST_DRS(0x01) );
     SIM_CLKDIV1 |= SIM_CLKDIV1_OUTDIV1(0x00);
@@ -111,9 +113,6 @@ void Effect_GPIO(){
             PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
             PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
             delay(8000*30);
-            PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
-            delay(8000*30);
             PTA->PDOR |= GPIO_PDOR_PDO(R6); // Off R6
             PTA->PDOR &= ~GPIO_PDOR_PDO(R7); // On R7
             delay(8000*30);
@@ -150,49 +149,32 @@ void PortsInit_PWM(void) //Will be used later
 
     /* Set GPIO on LED PINs as output because of Rows */
     PTA->PDDR = GPIO_PDDR_PDD(0x3F000C00);     // Have to set ROW PINs as output in GPIO here, not the colums which are here PWM
-    PTA->PDOR = GPIO_PDOR_PDO(0x3F000C00);     // GND na katodu
+    PTA->PDOR = GPIO_PDOR_PDO(0x3F000C00);     // Disabled GND on Rx
 
 }
 
 void FTM0_Init(void) {
 	SIM->SCGC6 |= SIM_SCGC6_FTM0_MASK;
-	FTM0->CNT = 0x0;            // Vynulujeme registr citace (Counter) casovace
-	FTM0->MOD = OVERFLOW;       // Nastavime hodnotu preteceni do Modulo registru
+	FTM0->CNT = 0x0;            // Clean the counter register
+	FTM0->MOD = OVERFLOW;       // Set the overflow value onto the modulo register
 
-    //Nastavime rezim generovani PWM na zvolenem kanalu (n) casovace v ridicim
-    //registru FTM_CnSC tohoto kanalu, konkretne:
-    //Edge-aligned PWM: High-true pulses (clear Output on match, set Output on reload),
-    //preruseni ani DMA requests nebudou vyuzivany.
-	FTM0_C3SC = 0x28;
+    // Set the PWM generation mode on the selected timer channel (n) in the FTM_CnSC control register of this channel	FTM0_C3SC = 0x28;
     FTM0_C4SC = 0x28;
 
-    //Nastavime konfiguraci casovace v jeho stavovem a ridicim registru (SC):
-    //(up counting mode pro Edge-aligned PWM, Clock Mode Selection (01),
-    //Prescale Factor Selection (Divide by 8), bez vyuziti preruseni ci DMA.
-    //Budeme-li masky v SC registru nastavovat postupne, je NUTNO
-    //toto provadet pri Clock Mode Selection = 00 (tj. v rezimu TPM disabled).
-	FTM0->SC = 0xB;
+	FTM0->SC = 0xB; //Set the configuration of the timer in its state register and control register
 
 }
 
 void FTM1_Init(void) {
     SIM->SCGC6 |= SIM_SCGC6_FTM1_MASK;
- 	FTM1->CNT = 0x0;            // Vynulujeme registr citace (Counter) casovace
-	FTM1->MOD = OVERFLOW;       // Nastavime hodnotu preteceni do Modulo registru
+ 	FTM1->CNT = 0x0;            // Clean the counter register
+	FTM1->MOD = OVERFLOW;       // Set the overflow value onto the modulo register
 
-    //Nastavime rezim generovani PWM na zvolenem kanalu (n) casovace v ridicim
-    //registru FTM_CnSC tohoto kanalu, konkretne:
-    //Edge-aligned PWM: High-true pulses (clear Output on match, set Output on reload),
-    //preruseni ani DMA requests nebudou vyuzivany.
+    // Set the PWM generation mode on the selected timer channel (n) in the FTM_CnSC control register of this channel	FTM0_C3SC = 0x28;
     FTM1_C0SC = 0x28;
     FTM1_C1SC = 0x28;
 
-    //Nastavime konfiguraci casovace v jeho stavovem a ridicim registru (SC):
-    //(up counting mode pro Edge-aligned PWM, Clock Mode Selection (01),
-    //Prescale Factor Selection (Divide by 8), bez vyuziti preruseni ci DMA.
-    //Budeme-li masky v SC registru nastavovat postupne, je NUTNO
-    //toto provadet pri Clock Mode Selection = 00 (tj. v rezimu TPM disabled).
-	FTM1->SC = 0xB;
+	FTM1->SC = 0xB; //Set the configuration of the timer in its state register and control register
 }
 
 void Effect_PWM(){
@@ -200,8 +182,8 @@ void Effect_PWM(){
     FTM0_Init();
     FTM1_Init();
 
-    int increment = 1;          // Priznak zvysovani (1) ci snizovani (0) hodnoty compare
-    unsigned int compare = 0;   // Hodnota pro komparacni registr (urcujici stridu PWM).
+    int increment = 1;
+    unsigned int compare = 0;   // Value for the comparator register.
 
     PTA->PDOR |= GPIO_PDOR_PDO(R1|R2|R3|R4|R5|R6|R7|R8); // Off all Rx
 
@@ -210,7 +192,7 @@ void Effect_PWM(){
     FTM1_C0V = 0;
     FTM1_C1V = 0;
     
-    for(int i = 0 ; i <= 16*OVERFLOW; i++){    
+    for(int i = 0 ; i <= 24*OVERFLOW; i++){    
         PTA->PDOR &= ~GPIO_PDOR_PDO(R1); // On R1
         PTA->PDOR &= ~GPIO_PDOR_PDO(R8); // On R8
         if(i>(2*OVERFLOW)){
@@ -226,50 +208,53 @@ void Effect_PWM(){
             PTA->PDOR &= ~GPIO_PDOR_PDO(R5); // On R5
         }
         if(i>(8*OVERFLOW)){
-            PTA->PDOR |= GPIO_PDOR_PDO(R1); // On R1
-            PTA->PDOR |= GPIO_PDOR_PDO(R8); // On R8
+            PTA->PDOR |= GPIO_PDOR_PDO(R1); // Off R1
+            PTA->PDOR |= GPIO_PDOR_PDO(R8); // Off R8
             FTM1_C1V = OVERFLOW;
         }
         if(i>(10*OVERFLOW)){
-            PTA->PDOR |= GPIO_PDOR_PDO(R2); // On R2
-            PTA->PDOR |= GPIO_PDOR_PDO(R7); // On R7
+            PTA->PDOR |= GPIO_PDOR_PDO(R2); // Off R2
+            PTA->PDOR |= GPIO_PDOR_PDO(R7); // Off R7
         }
         if(i>(12*OVERFLOW)){
-            PTA->PDOR |= GPIO_PDOR_PDO(R3); // On R3
-            PTA->PDOR |= GPIO_PDOR_PDO(R6); // On R6
+            PTA->PDOR |= GPIO_PDOR_PDO(R3); // Off R3
+            PTA->PDOR |= GPIO_PDOR_PDO(R6); // Off R6
         }
         if(i>(14*OVERFLOW)){
-            PTA->PDOR |= GPIO_PDOR_PDO(R4); // On R4
-            PTA->PDOR |= GPIO_PDOR_PDO(R5); // On R5
+            PTA->PDOR |= GPIO_PDOR_PDO(R4); // Off R4
+            PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
         }
         if(i>(16*OVERFLOW)){
-            
+            FTM0_C3V = 0;
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R4); // On R4
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R5); // On R5
+        }
+        if(i>(18*OVERFLOW)){
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R3); // On R3
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
+        }
+        if(i>(20*OVERFLOW)){
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R2); // On R2
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R7); // On R7
+        }
+        if(i>(22*OVERFLOW)){
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R1); // On R1
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R8); // On R8
         }
 
-        if (increment)  // Zvysuj stridu (compare), dokud neni dosazeno zvolene
-                        // maximalni hodnoty (postupne zvysovani jasu LED).
-                        // Po negaci priznaku increment bude strida snizovana.
-        {
-                compare++;
-                increment = !(compare >= OVERFLOW);
+        if (increment) {  // Increasing compare until the max value is reached
+            compare++;
+            increment = !(compare >= OVERFLOW);
         }
-        else    // Snizuj stridu (compare), dokud neni dosazeno nulove hodnoty
-                // (postupne snizovani jasu LED), nasledne bude strida opet zvysovana.
-        {
-                compare--;
-                increment = (compare == 0x00);
+        else {  // Decreasing compare until the max value is reached
+            compare--;
+            increment = (compare == 0x00);
         }
 
-        // 5. Priradte aktualni hodnotu compare do komparacniho registru zvoleneho kanalu
-        //    casovace TPM0 (napr. kanal c. 2 pro manipulaci s cervenou slozkou RGB LED).
+        // Assign the current compare value to the comparison register of the selected timer channel
+        // Compare for FTM1_C1V is not used here because of the more interesting color effect on the display.
         FTM0_C3V = compare;
         
-        // 6. LEDku nechte urcity cas svitit dle aktualni hodnoty stridy. Ve skutecnosti
-        //    LED velmi rychle blika, pricemz vhodnou frekvenci signalu PWM (danou hodnotou
-        //    modulo registru casovace) zajistime, ze blikani neni pro lidske oko patrne
-        //    a LEDka se tak jevi, ze sviti intenzitou odpovidajici aktualni stride PWM.
-        //    ZDE VYUZIJTE PRIPRAVENOU FUNKCI delay, EXPERIMENTALNE NASTAVTE HODNOTU
-        //    CEKANI TAK, ABY BYLY PLYNULE ZMENY JASU LED DOBRE PATRNE.
         delay(10000);
     }
 
@@ -282,8 +267,8 @@ int main(void)
     TurnClocksON();
     
     while (1) {
-        //Effect_GPIO();
-        //delay(8000*300);
+        Effect_GPIO();
+        delay(80000);
         Effect_PWM();
     }
 
