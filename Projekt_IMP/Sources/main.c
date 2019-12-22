@@ -17,6 +17,21 @@
 
 #define OVERFLOW 0x5DC
 
+#define R1  0xBFF
+#define R2  0x7FF
+#define R3  0xEFFFFFF
+#define R4  0xDFFFFFF
+#define R5  0xBFFFFFF
+#define R6  0x7FFFFFF
+#define R7  0xEFFFFFFF
+#define R8  0xDFFFFFFF
+
+#define C1357Green  0xDFF
+#define C1357Red    0xBF
+
+#define C2468Green  0xEFF
+#define C2468Red    0x7F
+
 /* A delay function */
 //DO NOT TOUCH
 void delay(long long bound) {
@@ -38,7 +53,7 @@ void TurnClocksON(void)
     SIM->SCGC5 = SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTA_MASK;
 }
 
-void PortsInit_Classic(void)
+void PortsInit_GPIO(void)
 {
     /* Set corresponding pins (connected to LED's) for GPIO functionality */
     
@@ -54,11 +69,11 @@ void PortsInit_Classic(void)
     PORTA->PCR[29] = PORT_PCR_MUX(0x01);    //R8	//PIN36
 
     //Columns
-    PORTA->PCR[9] = PORT_PCR_MUX(0x03);     //C1,3,5,7 - Green  //PIN28	//WireGreen
-    PORTA->PCR[6] = PORT_PCR_MUX(0x03);     //C1,3,5,7 - Red	//PIN25	//WireRed
+    PORTA->PCR[9] = PORT_PCR_MUX(0x01);     //C1,3,5,7 - Green  //PIN28	//WireGreen
+    PORTA->PCR[6] = PORT_PCR_MUX(0x01);     //C1,3,5,7 - Red	//PIN25	//WireRed
 
-    PORTA->PCR[8] = PORT_PCR_MUX(0x03);     //C2,4,6,8 - Green  //PIN23	//WireBlue
-    PORTA->PCR[7] = PORT_PCR_MUX(0x03);     //C2,4,6,8 - Red	//PIN27	//WireOrange
+    PORTA->PCR[8] = PORT_PCR_MUX(0x01);     //C2,4,6,8 - Green  //PIN23	//WireBlue
+    PORTA->PCR[7] = PORT_PCR_MUX(0x01);     //C2,4,6,8 - Red	//PIN27	//WireOrange
 
 
     /* Set GPIO on LED PINs as output because of Rows */
@@ -99,44 +114,74 @@ void PortsInit_PWM(void) //Will be used later
 
 void FTM0_Init(void) {
 	SIM->SCGC6 |= SIM_SCGC6_FTM0_MASK;
-	FTM0->CNT = 0x0;
-	FTM0->MOD = OVERFLOW;
+	FTM0->CNT = 0x0;            // Vynulujeme registr citace (Counter) casovace
+	FTM0->MOD = OVERFLOW;       // Nastavime hodnotu preteceni do Modulo registru
 
+    //Nastavime rezim generovani PWM na zvolenem kanalu (n) casovace v ridicim
+    //registru FTM_CnSC tohoto kanalu, konkretne:
+    //Edge-aligned PWM: High-true pulses (clear Output on match, set Output on reload),
+    //preruseni ani DMA requests nebudou vyuzivany.
 	FTM0_C3SC = 0x28;
     FTM0_C4SC = 0x28;
 
 	FTM0_C3V = OVERFLOW/2;
     FTM0_C4V = OVERFLOW/2;
 
+    //Nastavime konfiguraci casovace v jeho stavovem a ridicim registru (SC):
+    //(up counting mode pro Edge-aligned PWM, Clock Mode Selection (01),
+    //Prescale Factor Selection (Divide by 8), bez vyuziti preruseni ci DMA.
+    //Budeme-li masky v SC registru nastavovat postupne, je NUTNO
+    //toto provadet pri Clock Mode Selection = 00 (tj. v rezimu TPM disabled).
 	FTM0->SC = 0xB;
 
 }
 
 void FTM1_Init(void) {
     SIM->SCGC6 |= SIM_SCGC6_FTM1_MASK;
-    FTM1->CNT = 0x0;
-    FTM1->MOD = OVERFLOW;
+ 	FTM1->CNT = 0x0;            // Vynulujeme registr citace (Counter) casovace
+	FTM1->MOD = OVERFLOW;       // Nastavime hodnotu preteceni do Modulo registru
 
+    //Nastavime rezim generovani PWM na zvolenem kanalu (n) casovace v ridicim
+    //registru FTM_CnSC tohoto kanalu, konkretne:
+    //Edge-aligned PWM: High-true pulses (clear Output on match, set Output on reload),
+    //preruseni ani DMA requests nebudou vyuzivany.
     FTM1_C0SC = 0x28;
     FTM1_C1SC = 0x28;
 
     FTM1_C0V = OVERFLOW/2;
     FTM1_C1V = OVERFLOW/2;
 
-    FTM1->SC = 0xB;
+    //Nastavime konfiguraci casovace v jeho stavovem a ridicim registru (SC):
+    //(up counting mode pro Edge-aligned PWM, Clock Mode Selection (01),
+    //Prescale Factor Selection (Divide by 8), bez vyuziti preruseni ci DMA.
+    //Budeme-li masky v SC registru nastavovat postupne, je NUTNO
+    //toto provadet pri Clock Mode Selection = 00 (tj. v rezimu TPM disabled).
+	FTM1->SC = 0xB;
+}
+
+void Effect_GPIO(){
+    PortsInit_GPIO();
+    delay(7000);
+
+}
+
+void Effect_PWM(){
+    PortsInit_PWM();
+    FTM0_Init();
+    FTM1_Init();
+
+
+
 }
 
 int main(void)
 {
     MCUInit();
     TurnClocksON();
-    PortsInit_PWM();
-
-    FTM0_Init();
-    FTM1_Init();
+    
 
     while(1){
-
+        Effect_GPIO();
     }
 
 
