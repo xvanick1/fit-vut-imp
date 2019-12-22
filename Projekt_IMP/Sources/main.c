@@ -78,6 +78,53 @@ void PortsInit_GPIO(void)
 
 }
 
+void Effect_GPIO(){
+    PortsInit_GPIO();
+    
+    for(int j = 0; j< 3; j++){
+        for (int i = 0; i < 3; i++) {
+            if (i == 0) {
+                PTA->PDOR &= ~GPIO_PDOR_PDO(C1357Green|C2468Green);
+                PTA->PDOR |= GPIO_PDOR_PDO(C2468Red|C1357Red);
+            } else if (i == 1){
+                PTA->PDOR &= ~GPIO_PDOR_PDO(C2468Red|C1357Red);
+                PTA->PDOR |= GPIO_PDOR_PDO(C1357Green|C2468Green);
+            }
+            else{
+                PTA->PDOR |= GPIO_PDOR_PDO(C1357Green|C2468Green|C2468Red|C1357Red);
+            }
+            PTA->PDOR |= GPIO_PDOR_PDO(R1|R2|R3|R4|R5|R6|R7|R8); // Off all Rx
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R1); // On R1
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R1); // Off R1
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R2); // On R2
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R2); // Off R2
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R3); // On R3
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R3); // Off R3
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R4); // On R4
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R4); // Off R4
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R5); // On R5
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R6); // Off R6
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R7); // On R7
+            delay(8000*30);
+            PTA->PDOR |= GPIO_PDOR_PDO(R7); // Off R7
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R8); // On R8
+            delay(8000*30);
+        }
+    }
+    
+}
+
 void PortsInit_PWM(void) //Will be used later
 {
     /* Set corresponding pins (connected to LED's) for GPIO functionality */
@@ -103,7 +150,7 @@ void PortsInit_PWM(void) //Will be used later
 
     /* Set GPIO on LED PINs as output because of Rows */
     PTA->PDDR = GPIO_PDDR_PDD(0x3F000C00);     // Have to set ROW PINs as output in GPIO here, not the colums which are here PWM
-    PTA->PDOR &= GPIO_PDOR_PDO(0x0);     // GND na katodu
+    PTA->PDOR = GPIO_PDOR_PDO(0x3F000C00);     // GND na katodu
 
 }
 
@@ -154,54 +201,6 @@ void FTM1_Init(void) {
 	FTM1->SC = 0xB;
 }
 
-void Effect_GPIO(){
-    PortsInit_GPIO();
-    
-    for(int j = 0; j< 3; j++){
-        for (int i = 0; i < 3; i++) {
-            if (i == 0) {
-                PTA->PDOR &= ~GPIO_PDOR_PDO(C1357Green|C2468Green);
-                PTA->PDOR |= GPIO_PDOR_PDO(C2468Red|C1357Red);
-            } else if (i == 1){
-                PTA->PDOR &= ~GPIO_PDOR_PDO(C2468Red|C1357Red);
-                PTA->PDOR |= GPIO_PDOR_PDO(C1357Green|C2468Green);
-            }
-            else{
-                PTA->PDOR |= GPIO_PDOR_PDO(C1357Green|C2468Green|C2468Red|C1357Red);
-            }
-            PTA->PDOR |= GPIO_PDOR_PDO(R1|R2|R3|R4|R5|R6|R7|R8); // Off all Rx
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R1); // On R1
-            delay(8000*20);
-            PTA->PDOR |= GPIO_PDOR_PDO(R1); // Off R1
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R2); // On R2
-            delay(8000*30);
-            PTA->PDOR |= GPIO_PDOR_PDO(R2); // Off R2
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R3); // On R3
-            delay(8000*40);
-            PTA->PDOR |= GPIO_PDOR_PDO(R3); // Off R3
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R4); // On R4
-            delay(8000*50);
-            PTA->PDOR |= GPIO_PDOR_PDO(R4); // Off R4
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R5); // On R5
-            delay(8000*60);
-            PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
-            delay(8000*70);
-            PTA->PDOR |= GPIO_PDOR_PDO(R5); // Off R5
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
-            delay(8000*80);
-            PTA->PDOR |= GPIO_PDOR_PDO(R6); // Off R6
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R7); // On R7
-            delay(8000*90);
-            PTA->PDOR |= GPIO_PDOR_PDO(R7); // Off R7
-            PTA->PDOR &= ~GPIO_PDOR_PDO(R8); // On R8
-            delay(8000*100);
-        }
-    }
-    
-}
-
-
 void Effect_PWM(){
     PortsInit_PWM();
     FTM0_Init();
@@ -216,13 +215,11 @@ int main(void)
     MCUInit();
     TurnClocksON();
     
-
     while (1) {
         Effect_GPIO();
         delay(8000*300);
         Effect_PWM();
     }
-
 
     return 0;
 }
