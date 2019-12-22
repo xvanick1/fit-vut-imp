@@ -159,6 +159,7 @@ void FTM0_Init(void) {
 	FTM0->MOD = OVERFLOW;       // Set the overflow value onto the modulo register
 
     // Set the PWM generation mode on the selected timer channel (n) in the FTM_CnSC control register of this channel	FTM0_C3SC = 0x28;
+    FTM0_C3SC = 0x28;
     FTM0_C4SC = 0x28;
 
 	FTM0->SC = 0xB; //Set the configuration of the timer in its state register and control register
@@ -252,7 +253,7 @@ void Effect_PWM(){
         }
 
         // Assign the current compare value to the comparison register of the selected timer channel
-        // Compare for FTM1_C1V is not used here because of the more interesting color effect on the display.
+        // Compare for FTM1_C1V is not used here because of the more interesting color effect on the display.
         FTM0_C3V = compare;
         
         delay(10000);
