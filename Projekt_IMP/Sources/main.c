@@ -1,13 +1,9 @@
-//       An example for demonstrating basic principles of FITkit3 usage.
-//
-// It includes GPIO - inputs from button press/release, outputs for LED control,
-// timer in output compare mode for generating periodic events (via interrupt
-// service routine) and speaker handling (via alternating log. 0/1 through
-// GPIO output on a reasonable frequency). Using this as a basis for IMP projects
-// as well as for testing basic FITkit3 operation is strongly recommended.
-//
-//            (c) 2019 Michal Bidlo, BUT FIT, bidlom@fit.vutbr.cz
-////////////////////////////////////////////////////////////////////////////
+/**
+* Author: Jozef Vanicky
+* VUT Login: xvanic09
+* Date: 2019-12-21
+* Author's comment: N/A
+**/
 /* Header file with all the essential definitions for a given type of MCU */
 #include "MK60D10.h"
 
@@ -84,7 +80,6 @@ void PortsInit_GPIO(void)
 
 void PortsInit_PWM(void) //Will be used later
 {
-
     /* Set corresponding pins (connected to LED's) for GPIO functionality */
 
     //Rows
@@ -224,7 +219,8 @@ int main(void)
 
     while (1) {
         Effect_GPIO();
-        delay(8000*150);
+        delay(8000*300);
+        Effect_PWM();
     }
 
 
