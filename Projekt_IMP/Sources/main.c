@@ -11,7 +11,7 @@
 #define GPIO_PIN_MASK 0x1Fu
 #define GPIO_PIN(x) (((1)<<(x & GPIO_PIN_MASK)))
 
-#define OVERFLOW 0x5DC
+#define OVERFLOW 0xFF
 
 #define R1  0x400
 #define R2  0x800
@@ -166,9 +166,6 @@ void FTM0_Init(void) {
 	FTM0_C3SC = 0x28;
     FTM0_C4SC = 0x28;
 
-	FTM0_C3V = OVERFLOW/2;
-    FTM0_C4V = OVERFLOW/2;
-
     //Nastavime konfiguraci casovace v jeho stavovem a ridicim registru (SC):
     //(up counting mode pro Edge-aligned PWM, Clock Mode Selection (01),
     //Prescale Factor Selection (Divide by 8), bez vyuziti preruseni ci DMA.
@@ -190,9 +187,6 @@ void FTM1_Init(void) {
     FTM1_C0SC = 0x28;
     FTM1_C1SC = 0x28;
 
-    FTM1_C0V = OVERFLOW/2;
-    FTM1_C1V = OVERFLOW/2;
-
     //Nastavime konfiguraci casovace v jeho stavovem a ridicim registru (SC):
     //(up counting mode pro Edge-aligned PWM, Clock Mode Selection (01),
     //Prescale Factor Selection (Divide by 8), bez vyuziti preruseni ci DMA.
@@ -206,6 +200,78 @@ void Effect_PWM(){
     FTM0_Init();
     FTM1_Init();
 
+    int increment = 1;          // Priznak zvysovani (1) ci snizovani (0) hodnoty compare
+    unsigned int compare = 0;   // Hodnota pro komparacni registr (urcujici stridu PWM).
+
+    PTA->PDOR |= GPIO_PDOR_PDO(R1|R2|R3|R4|R5|R6|R7|R8); // Off all Rx
+
+    FTM0_C4V = 0;
+    FTM0_C3V = OVERFLOW;
+    FTM1_C0V = 0;
+    FTM1_C1V = 0;
+    
+    for(int i = 0 ; i <= 16*OVERFLOW; i++){    
+        PTA->PDOR &= ~GPIO_PDOR_PDO(R1); // On R1
+        PTA->PDOR &= ~GPIO_PDOR_PDO(R8); // On R8
+        if(i>(2*OVERFLOW)){
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R2); // On R2
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R7); // On R7
+        }
+        if(i>(4*OVERFLOW)){
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R3); // On R3
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R6); // On R6
+        }
+        if(i>(6*OVERFLOW)){
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R4); // On R4
+            PTA->PDOR &= ~GPIO_PDOR_PDO(R5); // On R5
+        }
+        if(i>(8*OVERFLOW)){
+            PTA->PDOR |= GPIO_PDOR_PDO(R1); // On R1
+            PTA->PDOR |= GPIO_PDOR_PDO(R8); // On R8
+            FTM1_C1V = OVERFLOW;
+        }
+        if(i>(10*OVERFLOW)){
+            PTA->PDOR |= GPIO_PDOR_PDO(R2); // On R2
+            PTA->PDOR |= GPIO_PDOR_PDO(R7); // On R7
+        }
+        if(i>(12*OVERFLOW)){
+            PTA->PDOR |= GPIO_PDOR_PDO(R3); // On R3
+            PTA->PDOR |= GPIO_PDOR_PDO(R6); // On R6
+        }
+        if(i>(14*OVERFLOW)){
+            PTA->PDOR |= GPIO_PDOR_PDO(R4); // On R4
+            PTA->PDOR |= GPIO_PDOR_PDO(R5); // On R5
+        }
+        if(i>(16*OVERFLOW)){
+            
+        }
+
+        if (increment)  // Zvysuj stridu (compare), dokud neni dosazeno zvolene
+                        // maximalni hodnoty (postupne zvysovani jasu LED).
+                        // Po negaci priznaku increment bude strida snizovana.
+        {
+                compare++;
+                increment = !(compare >= OVERFLOW);
+        }
+        else    // Snizuj stridu (compare), dokud neni dosazeno nulove hodnoty
+                // (postupne snizovani jasu LED), nasledne bude strida opet zvysovana.
+        {
+                compare--;
+                increment = (compare == 0x00);
+        }
+
+        // 5. Priradte aktualni hodnotu compare do komparacniho registru zvoleneho kanalu
+        //    casovace TPM0 (napr. kanal c. 2 pro manipulaci s cervenou slozkou RGB LED).
+        FTM0_C3V = compare;
+        
+        // 6. LEDku nechte urcity cas svitit dle aktualni hodnoty stridy. Ve skutecnosti
+        //    LED velmi rychle blika, pricemz vhodnou frekvenci signalu PWM (danou hodnotou
+        //    modulo registru casovace) zajistime, ze blikani neni pro lidske oko patrne
+        //    a LEDka se tak jevi, ze sviti intenzitou odpovidajici aktualni stride PWM.
+        //    ZDE VYUZIJTE PRIPRAVENOU FUNKCI delay, EXPERIMENTALNE NASTAVTE HODNOTU
+        //    CEKANI TAK, ABY BYLY PLYNULE ZMENY JASU LED DOBRE PATRNE.
+        delay(10000);
+    }
 
 
 }
@@ -216,8 +282,8 @@ int main(void)
     TurnClocksON();
     
     while (1) {
-        Effect_GPIO();
-        delay(8000*300);
+        //Effect_GPIO();
+        //delay(8000*300);
         Effect_PWM();
     }
 
