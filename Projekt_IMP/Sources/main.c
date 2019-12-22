@@ -41,31 +41,29 @@ void TurnClocksON(void)
 void PortsInit_Classic(void)
 {
     /* Set corresponding pins (connected to LED's) for GPIO functionality */
-    /*
+    
     //Rows
-    PORTE->PCR[28] = PORT_PCR_MUX(0x01);    //R1
-    PORTD->PCR[8] = PORT_PCR_MUX(0x01);     //R2 //change
-    PORTA->PCR[24] = PORT_PCR_MUX(0x01);    //R3
-    PORTA->PCR[25] = PORT_PCR_MUX(0x01);    //R4
+    PORTA->PCR[10] = PORT_PCR_MUX(0x01);    //R1	//PIN24
+    PORTA->PCR[11] = PORT_PCR_MUX(0x01);    //R2	//PIN26
+    PORTA->PCR[24] = PORT_PCR_MUX(0x01);    //R3	//PIN39
+    PORTA->PCR[25] = PORT_PCR_MUX(0x01);    //R4	//PIN40
 
-    PORTA->PCR[26] = PORT_PCR_MUX(0x01);    //R5
-    PORTA->PCR[27] = PORT_PCR_MUX(0x01);    //R6
-    PORTA->PCR[28] = PORT_PCR_MUX(0x01);    //R7
-    PORTA->PCR[29] = PORT_PCR_MUX(0x01);    //R8
+    PORTA->PCR[26] = PORT_PCR_MUX(0x01);    //R5	//PIN37
+    PORTA->PCR[27] = PORT_PCR_MUX(0x01);    //R6	//PIN35
+    PORTA->PCR[28] = PORT_PCR_MUX(0x01);    //R7	//PIN38
+    PORTA->PCR[29] = PORT_PCR_MUX(0x01);    //R8	//PIN36
 
     //Columns
-    PORTA->PCR[] = PORT_PCR_MUX(0x01);     //C1-R
-    PORTA->PCR[6] = PORT_PCR_MUX(0x01);     //C2-R
-    PORTA->PCR[] = PORT_PCR_MUX(0x01);     //C3-R
-    PORTA->PCR[] = PORT_PCR_MUX(0x01);     //C4-R
-    PORTA->PCR[] = PORT_PCR_MUX(0x03);     //C5-R
-    PORTA->PCR[] = PORT_PCR_MUX(0x03);     //C6-R
-    PORTA->PCR[] = PORT_PCR_MUX(0x03);     //C7-R
-    PORTA->PCR[] = PORT_PCR_MUX(0x03);     //C8-R
+    PORTA->PCR[9] = PORT_PCR_MUX(0x03);     //C1,3,5,7 - Green  //PIN28	//WireGreen
+    PORTA->PCR[6] = PORT_PCR_MUX(0x03);     //C1,3,5,7 - Red	//PIN25	//WireRed
 
-    /* Set GPIO on LED PINs as output */
-    PTA->PDDR = GPIO_PDDR_PDD(0x100003C);     // LED ports as outputs
-    PTA->PDOR &= GPIO_PDOR_PDO(0xFEFFFFFF);     // GND na katodu
+    PORTA->PCR[8] = PORT_PCR_MUX(0x03);     //C2,4,6,8 - Green  //PIN23	//WireBlue
+    PORTA->PCR[7] = PORT_PCR_MUX(0x03);     //C2,4,6,8 - Red	//PIN27	//WireOrange
+
+
+    /* Set GPIO on LED PINs as output because of Rows */
+    PTA->PDDR = GPIO_PDDR_PDD(0x3F000FC0);     // Have to set ROW PINs as output in GPIO here, not the colums which are here PWM
+    PTA->PDOR &= GPIO_PDOR_PDO(0xC0FFF03F);     // GND na katodu
 
 }
 
@@ -101,25 +99,30 @@ void PortsInit_PWM(void) //Will be used later
 
 void FTM0_Init(void) {
 	SIM->SCGC6 |= SIM_SCGC6_FTM0_MASK;
-    SIM->SCGC6 |= SIM_SCGC6_FTM1_MASK;
-
 	FTM0->CNT = 0x0;
-    FTM1->CNT = 0x0;
-
 	FTM0->MOD = OVERFLOW;
-    FTM1->MOD = OVERFLOW;
 
 	FTM0_C3SC = 0x28;
     FTM0_C4SC = 0x28;
-    FTM1_C0SC = 0x28;
-    FTM1_C1SC = 0x28;
 
 	FTM0_C3V = OVERFLOW/2;
     FTM0_C4V = OVERFLOW/2;
+
+	FTM0->SC = 0xB;
+
+}
+
+void FTM1_Init(void) {
+    SIM->SCGC6 |= SIM_SCGC6_FTM1_MASK;
+    FTM1->CNT = 0x0;
+    FTM1->MOD = OVERFLOW;
+
+    FTM1_C0SC = 0x28;
+    FTM1_C1SC = 0x28;
+
     FTM1_C0V = OVERFLOW/2;
     FTM1_C1V = OVERFLOW/2;
 
-	FTM0->SC = 0xB;
     FTM1->SC = 0xB;
 }
 
@@ -130,6 +133,7 @@ int main(void)
     PortsInit_PWM();
 
     FTM0_Init();
+    FTM1_Init();
 
     while(1){
 
