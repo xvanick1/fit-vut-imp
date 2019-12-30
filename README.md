@@ -1,0 +1,3 @@
+- Výsledné hodnotenie: 14/14b. 
+- Projekt bol hodnotený bez povinnej obhajoby.
+- Obhajoby zrušené zo strany vyučujúceho.
